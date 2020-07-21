@@ -19,7 +19,8 @@ using blockIdx = struct { int x; int y; int z; };
 
 #define DIVSHORTMAX 0.0000305185f //1.f / SHRT_MAX;
 #define SHORTMAX 32767 //SHRT_MAX;
-#define MAX_WEIGHT 128
+#define MAX_WEIGHT 32767
+#define WEIGHT_SCALE 500.0
 
 using cv::cuda::PtrStep;
 using cv::cuda::PtrStepSz;

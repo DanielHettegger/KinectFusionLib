@@ -149,6 +149,7 @@ namespace kinectfusion {
 
         // The initial distance of the camera from the volume center along the z-axis (in mm)
         float init_depth { 1000.f };
+        float3 model_offset {make_float3(0.f,0.f,0.f)};
 
         // Downloads the model frame for each frame (for visualization purposes). If this is set to true, you can
         // retrieve the frame with Pipeline::get_last_model_frame()

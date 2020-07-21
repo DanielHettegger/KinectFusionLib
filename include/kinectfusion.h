@@ -40,7 +40,7 @@ namespace kinectfusion {
          * @param color_map The RGB color map. Must be a matrix (datatype CV_8UC3)
          * @return Whether the frame has been fused successfully. Will only be false if the ICP failed.
          */
-        bool process_frame(const cv::Mat_<float>& depth_map, const cv::Mat_<cv::Vec3b>& color_map);
+        bool process_frame(const cv::Mat_<float>& depth_map, const cv::Mat_<cv::Vec3b>& color_map, Eigen::Matrix4f pose);
 
         /**
          * Retrieve all camera poses computed so far
@@ -79,6 +79,7 @@ namespace kinectfusion {
 
         // Poses: Current and all previous
         Eigen::Matrix4f current_pose;
+        Eigen::Matrix4f offset;
         std::vector<Eigen::Matrix4f> poses;
 
         // Frame ID and raycast result for output purposes

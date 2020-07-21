@@ -10,6 +10,22 @@ namespace kinectfusion {
     namespace internal {
         namespace cuda {
 
+
+            __constant__ float center_x = 320.0;
+            __constant__ float center_y = 240.0;
+            __constant__ float diastance_thresh = 220.0;//170.0;
+
+            __device__ 
+            float calculate_weight(float depth, int px, int py){
+                float pos[2] = {px - center_x, py - center_y};
+                float center_dist = normf(2, pos);
+                float center_dist_adapt = fmaxf(0.0, center_dist - diastance_thresh);
+                float p = 1.316 - 0.00315 * center_dist_adapt;
+                float k = 0.000305 + 0.000009285 * center_dist_adapt;
+                return WEIGHT_SCALE / expf(center_dist_adapt * k) / p;
+                //return center_dist_adapt < 10e-5 ? WEIGHT_SCALE : 0.0;
+            }
+
             __global__
             void update_tsdf_kernel(const PtrStepSz<float> depth_image, const PtrStepSz<uchar3> color_image,
                                     PtrStepSz<short2> tsdf_volume, PtrStepSz<uchar3> color_volume,
@@ -60,10 +76,11 @@ namespace kinectfusion {
                         const float current_tsdf = static_cast<float>(voxel_tuple.x) * DIVSHORTMAX;
                         const int current_weight = voxel_tuple.y;
 
-                        const int add_weight = 1;
+                        //const int add_weight = WEIGHT_SCALE;
+                        const int add_weight = (int) calculate_weight(depth, uv.x(), uv.y());
 
-                        const float updated_tsdf = (current_weight * current_tsdf + add_weight * new_tsdf) /
-                                                   (current_weight + add_weight);
+                        const float updated_tsdf = (current_weight/WEIGHT_SCALE * current_tsdf + add_weight/WEIGHT_SCALE * new_tsdf) /
+                                                   (current_weight/WEIGHT_SCALE + add_weight/WEIGHT_SCALE);
 
                         const int new_weight = min(current_weight + add_weight, MAX_WEIGHT);
                         const int new_value = max(-SHORTMAX, min(SHORTMAX, static_cast<int>(updated_tsdf * SHORTMAX)));
@@ -76,14 +93,14 @@ namespace kinectfusion {
                             const uchar3 image_color = color_image.ptr(uv.y())[uv.x()];
 
                             model_color.x = static_cast<uchar>(
-                                    (current_weight * model_color.x + add_weight * image_color.x) /
-                                    (current_weight + add_weight));
+                                    (current_weight/WEIGHT_SCALE * model_color.x + add_weight/WEIGHT_SCALE * image_color.x) /
+                                    (current_weight/WEIGHT_SCALE + add_weight/WEIGHT_SCALE));
                             model_color.y = static_cast<uchar>(
-                                    (current_weight * model_color.y + add_weight * image_color.y) /
-                                    (current_weight + add_weight));
+                                    (current_weight/WEIGHT_SCALE * model_color.y + add_weight/WEIGHT_SCALE * image_color.y) /
+                                    (current_weight/WEIGHT_SCALE + add_weight/WEIGHT_SCALE));
                             model_color.z = static_cast<uchar>(
-                                    (current_weight * model_color.z + add_weight * image_color.z) /
-                                    (current_weight + add_weight));
+                                    (current_weight/WEIGHT_SCALE * model_color.z + add_weight/WEIGHT_SCALE * image_color.z) /
+                                    (current_weight/WEIGHT_SCALE + add_weight/WEIGHT_SCALE));
                         }
                     }
                 }

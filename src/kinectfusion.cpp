@@ -4,6 +4,7 @@
 #include <kinectfusion.h>
 
 #include <fstream>
+#include <iostream>
 
 using cv::cuda::GpuMat;
 
@@ -14,16 +15,16 @@ namespace kinectfusion {
             camera_parameters(_camera_parameters), configuration(_configuration),
             volume(_configuration.volume_size, _configuration.voxel_scale),
             model_data(_configuration.num_levels, _camera_parameters),
-            current_pose{}, poses{}, frame_id{0}, last_model_frame{}
+            current_pose{}, offset{}, poses{}, frame_id{0}, last_model_frame{}
     {
         // The pose starts in the middle of the cube, offset along z by the initial depth
-        current_pose.setIdentity();
-        current_pose(0, 3) = _configuration.volume_size.x / 2 * _configuration.voxel_scale;
-        current_pose(1, 3) = _configuration.volume_size.y / 2 * _configuration.voxel_scale;
-        current_pose(2, 3) = _configuration.volume_size.z / 2 * _configuration.voxel_scale - _configuration.init_depth;
+        offset.setIdentity();
+        offset(0, 3) = configuration.volume_size.x / 2 * configuration.voxel_scale - _configuration.model_offset.x;
+        offset(1, 3) = configuration.volume_size.y / 2 * configuration.voxel_scale - _configuration.model_offset.y;
+        offset(2, 3) = configuration.volume_size.z / 2 * configuration.voxel_scale - _configuration.model_offset.z;
     }
 
-    bool Pipeline::process_frame(const cv::Mat_<float>& depth_map, const cv::Mat_<cv::Vec3b>& color_map)
+    bool Pipeline::process_frame(const cv::Mat_<float>& depth_map, const cv::Mat_<cv::Vec3b>& color_map, Eigen::Matrix4f pose)
     {
         // STEP 1: Surface measurement
         internal::FrameData frame_data = internal::surface_measurement(depth_map, camera_parameters,
@@ -35,7 +36,7 @@ namespace kinectfusion {
         frame_data.color_pyramid[0].upload(color_map);
 
         // STEP 2: Pose estimation
-        bool icp_success { true };
+        /*bool icp_success { true };
         if (frame_id > 0) { // Do not perform ICP for the very first frame
             icp_success = internal::pose_estimation(current_pose, frame_data, model_data, camera_parameters,
                                                     configuration.num_levels,
@@ -43,8 +44,17 @@ namespace kinectfusion {
                                                     configuration.icp_iterations);
         }
         if (!icp_success)
-            return false;
+            return false;*/
+        
+       
 
+        /*if (frame_id == 0){
+            first_pose = pose;
+            camera_pose = current_pose;
+        }
+        current_pose =  camera_pose * first_pose.inverse() * pose;
+        //std::cout << current_pose << std::endl;*/
+        current_pose = offset * pose;
         poses.push_back(current_pose);
 
         // STEP 3: Surface reconstruction
