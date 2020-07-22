@@ -15,14 +15,14 @@ namespace kinectfusion {
             __constant__ float center_y = 240.0;
             __constant__ float diastance_thresh = 220.0;//170.0;
 
-            __device__ 
+            __device__ __forceinline__
             float calculate_weight(float depth, int px, int py){
                 float pos[2] = {px - center_x, py - center_y};
                 float center_dist = normf(2, pos);
                 float center_dist_adapt = fmaxf(0.0, center_dist - diastance_thresh);
                 float p = 1.316 - 0.00315 * center_dist_adapt;
                 float k = 0.000305 + 0.000009285 * center_dist_adapt;
-                return WEIGHT_SCALE / expf(center_dist_adapt * k) / p;
+                return WEIGHT_SCALE / expf(depth * k) / p;
                 //return center_dist_adapt < 10e-5 ? WEIGHT_SCALE : 0.0;
             }
 
