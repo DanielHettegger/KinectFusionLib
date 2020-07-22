@@ -60,7 +60,7 @@ namespace kinectfusion {
         // STEP 3: Surface reconstruction
         internal::cuda::surface_reconstruction(frame_data.depth_pyramid[0], frame_data.color_pyramid[0],
                                                volume, camera_parameters, configuration.truncation_distance,
-                                               current_pose.inverse());
+                                               current_pose.inverse(), configuration.use_kinect_noise_model);
 
         // Step 4: Surface prediction
         for (int level = 0; level < configuration.num_levels; ++level)

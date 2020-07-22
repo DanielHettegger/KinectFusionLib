@@ -141,7 +141,8 @@ namespace kinectfusion {
                                         VolumeData& volume,
                                         const CameraParameters& cam_params,
                                         const float truncation_distance,
-                                        const Eigen::Matrix4f& model_view);
+                                        const Eigen::Matrix4f& model_view,
+                                        bool use_kinect_noise_model);
 
 
             /*

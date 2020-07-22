@@ -320,7 +320,7 @@ namespace kinectfusion {
                 // ### ###
 
                 // Get triangle vertex colors
-                if (total_vertices < mesh_data.triangle_buffer.cols)
+                if (total_vertices > mesh_data.triangle_buffer.cols)
                     throw std::runtime_error {"Insuficcent space in triangle buffer. Please increase and rerun."};
                 GpuMat triangles_output(mesh_data.triangle_buffer, cv::Range::all(), cv::Range(0, total_vertices));
                 GpuMat vertex_colors = cv::cuda::createContinuous(1, total_vertices, CV_8UC3);

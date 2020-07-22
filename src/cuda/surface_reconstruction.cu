@@ -31,7 +31,8 @@ namespace kinectfusion {
                                     PtrStepSz<short2> tsdf_volume, PtrStepSz<uchar3> color_volume,
                                     int3 volume_size, float voxel_scale,
                                     CameraParameters cam_params, const float truncation_distance,
-                                    Eigen::Matrix<float, 3, 3, Eigen::DontAlign> rotation, Vec3fda translation)
+                                    Eigen::Matrix<float, 3, 3, Eigen::DontAlign> rotation, Vec3fda translation,
+                                    bool use_kinect_noise_model)
             {
                 const int x = blockIdx.x * blockDim.x + threadIdx.x;
                 const int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -76,8 +77,11 @@ namespace kinectfusion {
                         const float current_tsdf = static_cast<float>(voxel_tuple.x) * DIVSHORTMAX;
                         const int current_weight = voxel_tuple.y;
 
-                        //const int add_weight = WEIGHT_SCALE;
-                        const int add_weight = (int) calculate_weight(depth, uv.x(), uv.y());
+                        int add_weight;
+                        if (use_kinect_noise_model)
+                            add_weight = (int) calculate_weight(depth, uv.x(), uv.y());
+                        else
+                            add_weight = WEIGHT_SCALE;
 
                         const float updated_tsdf = (current_weight/WEIGHT_SCALE * current_tsdf + add_weight/WEIGHT_SCALE * new_tsdf) /
                                                    (current_weight/WEIGHT_SCALE + add_weight/WEIGHT_SCALE);
@@ -110,7 +114,8 @@ namespace kinectfusion {
             void surface_reconstruction(const cv::cuda::GpuMat& depth_image, const cv::cuda::GpuMat& color_image,
                                         VolumeData& volume,
                                         const CameraParameters& cam_params, const float truncation_distance,
-                                        const Eigen::Matrix4f& model_view)
+                                        const Eigen::Matrix4f& model_view,
+                                        bool use_kinect_noise_model)
             {
                 const dim3 threads(32, 32);
                 const dim3 blocks((volume.volume_size.x + threads.x - 1) / threads.x,
@@ -120,7 +125,8 @@ namespace kinectfusion {
                         volume.tsdf_volume, volume.color_volume,
                         volume.volume_size, volume.voxel_scale,
                         cam_params, truncation_distance,
-                        model_view.block(0, 0, 3, 3), model_view.block(0, 3, 3, 1));
+                        model_view.block(0, 0, 3, 3), model_view.block(0, 3, 3, 1),
+                        use_kinect_noise_model);
 
                 cudaThreadSynchronize();
             }

@@ -177,6 +177,9 @@ namespace kinectfusion {
         float angle_threshold { 20.f };
         // Number of ICP iterations for each level from original level 0 to highest scaled level (sparse to coarse)
         std::vector<int> icp_iterations {10, 5, 4};
+
+        //Use Kinect 2 noise model in tsdf integration 
+        bool use_kinect_noise_model = false;
     };
 
 
